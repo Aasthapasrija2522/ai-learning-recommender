@@ -45,3 +45,15 @@ class ProfileResponse(BaseModel):
 
     class Config:
         from_attributes = True
+class QuizSubmission(BaseModel):
+    answers: dict[str, str]
+
+class QuizResult(BaseModel):
+    id: int
+    score: int
+    total_questions: int
+    answers: dict
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

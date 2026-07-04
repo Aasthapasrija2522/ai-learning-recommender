@@ -1,3 +1,4 @@
+from quiz_data import QUIZ_QUESTIONS
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -110,3 +111,36 @@ def get_profile(
         raise HTTPException(status_code=404, detail="Profile not found")
 
     return profile
+@app.get("/quiz/questions")
+def get_quiz_questions():
+    questions_only = [
+        {"id": q["id"], "question": q["question"], "options": q["options"]}
+        for q in QUIZ_QUESTIONS
+    ]
+    return {"questions": questions_only}
+
+
+@app.post("/quiz/submit", response_model=schemas.QuizResult)
+def submit_quiz(
+    submission: schemas.QuizSubmission,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    score = 0
+    for question in QUIZ_QUESTIONS:
+        user_answer = submission.answers.get(question["id"])
+        if user_answer == question["correct"]:
+            score += 1
+
+    new_attempt = models.QuizAttempt(
+        user_id=current_user.id,
+        score=score,
+        total_questions=len(QUIZ_QUESTIONS),
+        answers=submission.answers
+    )
+
+    db.add(new_attempt)
+    db.commit()
+    db.refresh(new_attempt)
+
+    return new_attempt

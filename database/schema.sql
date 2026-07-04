@@ -14,3 +14,11 @@ CREATE TABLE profiles (
     daily_study_minutes INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE quiz_attempts (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    score INTEGER NOT NULL,
+    total_questions INTEGER NOT NULL,
+    answers JSONB NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

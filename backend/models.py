@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, ARRAY
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import JSONB
+
 from database import Base
 
 
@@ -10,8 +12,21 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
-    full_name = Column(String(100))
+    full_name = Column(String(100), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    profile = relationship(
+        "Profile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
+
+    quiz_attempts = relationship(
+        "QuizAttempt",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
 
 class Profile(Base):
@@ -24,10 +39,29 @@ class Profile(Base):
         unique=True,
         nullable=False
     )
+
     interests = Column(ARRAY(String), nullable=False)
     career_goal = Column(String(255), nullable=False)
     current_skills = Column(ARRAY(String), nullable=False)
     daily_study_minutes = Column(Integer, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    user = relationship("User", backref="profile")
+    user = relationship("User", back_populates="profile")
+
+
+class QuizAttempt(Base):
+    __tablename__ = "quiz_attempts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    score = Column(Integer, nullable=False)
+    total_questions = Column(Integer, nullable=False)
+    answers = Column(JSONB, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="quiz_attempts")
