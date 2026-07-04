@@ -73,3 +73,16 @@ class Roadmap(Base):
     skill_level = Column(String(50), nullable=False)
     recommendations = Column(JSONB, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+from sqlalchemy import Boolean, UniqueConstraint
+
+class TopicProgress(Base):
+    __tablename__ = "topic_progress"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    topic_id = Column(String(50), nullable=False)
+    completed = Column(Boolean, nullable=False, default=False)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (UniqueConstraint("user_id", "topic_id", name="uq_user_topic"),)

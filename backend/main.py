@@ -3,6 +3,7 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from recommendation_engine import generate_recommendations
+from datetime import datetime
 
 import models
 import schemas
@@ -198,3 +199,89 @@ def get_latest_roadmap(
         raise HTTPException(status_code=404, detail="No roadmap found. Generate one first.")
 
     return roadmap
+@app.post("/progress", response_model=schemas.TopicProgressResponse)
+def update_progress(
+    update: schemas.TopicProgressUpdate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    existing = (
+        db.query(models.TopicProgress)
+        .filter(
+            models.TopicProgress.user_id == current_user.id,
+            models.TopicProgress.topic_id == update.topic_id
+        )
+        .first()
+    )
+
+    if existing:
+        existing.completed = update.completed
+        existing.completed_at = datetime.utcnow() if update.completed else None
+        db.commit()
+        db.refresh(existing)
+        return existing
+    else:
+        new_progress = models.TopicProgress(
+            user_id=current_user.id,
+            topic_id=update.topic_id,
+            completed=update.completed,
+            completed_at=datetime.utcnow() if update.completed else None
+        )
+        db.add(new_progress)
+        db.commit()
+        db.refresh(new_progress)
+        return new_progress
+
+
+@app.get("/progress/summary", response_model=schemas.ProgressSummary)
+def get_progress_summary(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    latest_roadmap = (
+        db.query(models.Roadmap)
+        .filter(models.Roadmap.user_id == current_user.id)
+        .order_by(models.Roadmap.created_at.desc())
+        .first()
+    )
+    if not latest_roadmap:
+        raise HTTPException(status_code=404, detail="No roadmap found. Generate one first.")
+
+    roadmap_topic_ids = [rec["topic_id"] for rec in latest_roadmap.recommendations]
+
+    progress_rows = (
+        db.query(models.TopicProgress)
+        .filter(
+            models.TopicProgress.user_id == current_user.id,
+            models.TopicProgress.topic_id.in_(roadmap_topic_ids)
+        )
+        .all()
+    )
+
+    progress_by_topic = {p.topic_id: p for p in progress_rows}
+
+    topics_status = []
+    completed_count = 0
+    for topic_id in roadmap_topic_ids:
+        progress = progress_by_topic.get(topic_id)
+        is_completed = progress.completed if progress else False
+        completed_at = progress.completed_at if progress else None
+
+        if is_completed:
+            completed_count += 1
+
+        topics_status.append({
+            "topic_id": topic_id,
+            "completed": is_completed,
+            "completed_at": completed_at
+        })
+
+    total = len(roadmap_topic_ids)
+    percentage = round((completed_count / total) * 100, 1) if total > 0 else 0.0
+
+    return {
+        "total_topics": total,
+        "completed_topics": completed_count,
+        "percentage": percentage,
+        "topics": topics_status
+    }

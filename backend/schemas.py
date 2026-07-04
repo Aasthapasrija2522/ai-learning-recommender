@@ -65,4 +65,21 @@ class RoadmapResponse(BaseModel):
 
     class Config:
         from_attributes = True
+class TopicProgressUpdate(BaseModel):
+    topic_id: str
+    completed: bool
+
+class TopicProgressResponse(BaseModel):
+    topic_id: str
+    completed: bool
+    completed_at: datetime | None
+
+    class Config:
+        from_attributes = True
+
+class ProgressSummary(BaseModel):
+    total_topics: int
+    completed_topics: int
+    percentage: float
+    topics: list[TopicProgressResponse]
         
