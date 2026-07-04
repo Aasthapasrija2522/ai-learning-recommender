@@ -3,7 +3,7 @@ from recommendation_engine import generate_recommendations
 result = generate_recommendations(
     career_goal="Backend Developer",
     current_skills=["python", "sql"],
-    score=4,
+    score=1,
     total_questions=5
 )
 

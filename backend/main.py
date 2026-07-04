@@ -2,6 +2,7 @@ from quiz_data import QUIZ_QUESTIONS
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+from recommendation_engine import generate_recommendations
 
 import models
 import schemas
@@ -144,3 +145,56 @@ def submit_quiz(
     db.refresh(new_attempt)
 
     return new_attempt
+@app.post("/roadmap/generate", response_model=schemas.RoadmapResponse)
+def generate_roadmap(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    profile = db.query(models.Profile).filter(models.Profile.user_id == current_user.id).first()
+    if not profile:
+        raise HTTPException(status_code=400, detail="Please complete your profile before generating a roadmap")
+
+    latest_quiz = (
+        db.query(models.QuizAttempt)
+        .filter(models.QuizAttempt.user_id == current_user.id)
+        .order_by(models.QuizAttempt.created_at.desc())
+        .first()
+    )
+    if not latest_quiz:
+        raise HTTPException(status_code=400, detail="Please complete the skill assessment quiz first")
+
+    result = generate_recommendations(
+        career_goal=profile.career_goal,
+        current_skills=profile.current_skills,
+        score=latest_quiz.score,
+        total_questions=latest_quiz.total_questions
+    )
+
+    new_roadmap = models.Roadmap(
+        user_id=current_user.id,
+        skill_level=result["skill_level"],
+        recommendations=result["recommendations"]
+    )
+
+    db.add(new_roadmap)
+    db.commit()
+    db.refresh(new_roadmap)
+
+    return new_roadmap
+
+
+@app.get("/roadmap/latest", response_model=schemas.RoadmapResponse)
+def get_latest_roadmap(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    roadmap = (
+        db.query(models.Roadmap)
+        .filter(models.Roadmap.user_id == current_user.id)
+        .order_by(models.Roadmap.created_at.desc())
+        .first()
+    )
+    if not roadmap:
+        raise HTTPException(status_code=404, detail="No roadmap found. Generate one first.")
+
+    return roadmap

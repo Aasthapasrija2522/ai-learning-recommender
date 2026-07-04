@@ -57,3 +57,12 @@ class QuizResult(BaseModel):
 
     class Config:
         from_attributes = True
+class RoadmapResponse(BaseModel):
+    id: int
+    skill_level: str
+    recommendations: list[dict]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+        
