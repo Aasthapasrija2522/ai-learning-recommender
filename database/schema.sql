@@ -5,3 +5,12 @@ CREATE TABLE users (
     full_name VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE profiles (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    interests TEXT[] NOT NULL,
+    career_goal VARCHAR(255) NOT NULL,
+    current_skills TEXT[] NOT NULL,
+    daily_study_minutes INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
