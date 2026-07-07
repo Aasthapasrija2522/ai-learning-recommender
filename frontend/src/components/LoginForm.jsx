@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { login } from '../api/api';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -13,7 +15,7 @@ function LoginForm() {
     try {
       const response = await login(email, password);
       localStorage.setItem('token', response.data.access_token);
-      setMessage('Login successful!');
+      navigate('/dashboard');
     } catch (error) {
       if (error.response) {
         setMessage(`Error: ${error.response.data.detail}`);

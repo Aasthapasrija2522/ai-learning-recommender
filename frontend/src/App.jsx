@@ -1,15 +1,27 @@
-import Welcome from './components/Welcome';
-import SignupForm from './components/SignupForm';
-import LoginForm from './components/LoginForm';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import SignupPage from './pages/SignupPage';
+import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
+import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
 function App() {
   return (
-    <div className="App min-h-screen bg-gray-100 py-10">
-      <Welcome name="Learner" />
-      <SignupForm />
-      <LoginForm />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/signup" replace />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
