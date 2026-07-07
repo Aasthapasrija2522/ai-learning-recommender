@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import SignupPage from './pages/SignupPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import OnboardingPage from './pages/OnboardingPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -20,6 +21,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+        path="/onboarding"
+        element={
+          <ProtectedRoute>
+          <OnboardingPage />
+          </ProtectedRoute>
+       }
+    />
       </Routes>
     </BrowserRouter>
   );
