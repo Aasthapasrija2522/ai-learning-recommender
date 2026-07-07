@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import OnboardingPage from './pages/OnboardingPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import QuizPage from './pages/QuizPage';
 import './App.css';
 
 function App() {
@@ -29,6 +30,16 @@ function App() {
           </ProtectedRoute>
        }
     />
+        <Route
+        path="/quiz"
+        element={
+          <ProtectedRoute>
+          <QuizPage />
+          </ProtectedRoute>
+       }
+    />
+
+
       </Routes>
     </BrowserRouter>
   );

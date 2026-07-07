@@ -41,5 +41,12 @@ export const createProfile = (interests, careerGoal, currentSkills, dailyStudyMi
 export const getProfile = () => {
   return api.get('/profile');
 };
+export const getQuizQuestions = () => {
+  return api.get('/quiz/questions');
+};
+
+export const submitQuiz = (answers) => {
+  return api.post('/quiz/submit', { answers: answers });
+};
 
 export default api;
