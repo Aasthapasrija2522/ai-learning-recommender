@@ -40,6 +40,12 @@ function RecommendationCard({ recommendation, isCompleted, onToggle }) {
       <p className="text-sm text-gray-600 mt-1">
         {recommendation.reason}
       </p>
+      {recommendation.ai_explanation && (
+        <p className="text-sm text-blue-700 italic mt-2 bg-blue-50 p-2 rounded">
+          💡 {recommendation.ai_explanation}
+        </p>
+      )}
+
 
       <a
         href={recommendation.resource_url}

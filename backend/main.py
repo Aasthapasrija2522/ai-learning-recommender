@@ -5,6 +5,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from recommendation_engine import generate_recommendations
 from datetime import datetime
+from llm_service import generate_friendly_explanation
 
 import models
 import schemas
@@ -179,6 +180,14 @@ def generate_roadmap(
         score=latest_quiz.score,
         total_questions=latest_quiz.total_questions
     )
+    high_priority_recs = [r for r in result["recommendations"] if r["priority"] == "high"]
+    for rec in high_priority_recs[:3]:
+        rec["ai_explanation"] = generate_friendly_explanation(
+            topic_name=rec["topic_name"],
+            rule_based_reason=rec["reason"],
+            career_goal=profile.career_goal,
+            skill_level=result["skill_level"]
+        )
 
     new_roadmap = models.Roadmap(
         user_id=current_user.id,
