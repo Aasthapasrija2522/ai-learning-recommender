@@ -55,5 +55,12 @@ export const generateRoadmap = () => {
 export const getLatestRoadmap = () => {
   return api.get('/roadmap/latest');
 };
+export const updateProgress = (topicId, completed) => {
+  return api.post('/progress', { topic_id: topicId, completed: completed });
+};
+
+export const getProgressSummary = () => {
+  return api.get('/progress/summary');
+};
 
 export default api;

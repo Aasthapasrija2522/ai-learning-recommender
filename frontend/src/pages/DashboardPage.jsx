@@ -1,26 +1,32 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { generateRoadmap, getLatestRoadmap } from '../api/api';
+import { generateRoadmap, getLatestRoadmap, updateProgress, getProgressSummary } from '../api/api';
 import RecommendationCard from '../components/RecommendationCard';
+import ProgressChart from '../components/ProgressChart';
 
 function DashboardPage() {
   const [roadmap, setRoadmap] = useState(null);
+  const [progressSummary, setProgressSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    const fetchRoadmap = async () => {
-      try {
-        const response = await getLatestRoadmap();
-        setRoadmap(response.data);
-      } catch (error) {
-        setRoadmap(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchDashboardData = async () => {
+    try {
+      const roadmapResponse = await getLatestRoadmap();
+      setRoadmap(roadmapResponse.data);
 
-    fetchRoadmap();
+      const progressResponse = await getProgressSummary();
+      setProgressSummary(progressResponse.data);
+    } catch (error) {
+      setRoadmap(null);
+      setProgressSummary(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
   }, []);
 
   const handleGenerate = async () => {
@@ -29,6 +35,8 @@ function DashboardPage() {
     try {
       const response = await generateRoadmap();
       setRoadmap(response.data);
+      const progressResponse = await getProgressSummary();
+      setProgressSummary(progressResponse.data);
     } catch (error) {
       if (error.response) {
         setMessage(`Error: ${error.response.data.detail}`);
@@ -38,6 +46,22 @@ function DashboardPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleToggle = async (topicId, completed) => {
+    try {
+      await updateProgress(topicId, completed);
+      const progressResponse = await getProgressSummary();
+      setProgressSummary(progressResponse.data);
+    } catch (error) {
+      setMessage('Failed to update progress.');
+    }
+  };
+
+  const isTopicCompleted = (topicId) => {
+    if (!progressSummary) return false;
+    const topicEntry = progressSummary.topics.find((t) => t.topic_id === topicId);
+    return topicEntry ? topicEntry.completed : false;
   };
 
   if (loading) {
@@ -54,10 +78,7 @@ function DashboardPage() {
             <p className="text-gray-600 mb-4">You don't have a roadmap yet.</p>
             <Link to="/quiz" className="text-blue-600 underline">Take the quiz first</Link>
             <div className="mt-4">
-              <button
-                onClick={handleGenerate}
-                className="bg-blue-600 text-white px-4 py-2 rounded"
-              >
+              <button onClick={handleGenerate} className="bg-blue-600 text-white px-4 py-2 rounded">
                 Generate My Roadmap
               </button>
             </div>
@@ -65,22 +86,35 @@ function DashboardPage() {
         )}
 
         {roadmap && (
-          <div className="bg-white p-6 rounded shadow">
-            <p className="mb-4 text-gray-700">
-              Skill level: <span className="font-semibold">{roadmap.skill_level}</span>
-            </p>
+          <>
+            {progressSummary && (
+              <div className="bg-white p-6 rounded shadow mb-4 text-center">
+                <h2 className="font-semibold mb-2">
+                  Progress: {progressSummary.completed_topics} / {progressSummary.total_topics} ({progressSummary.percentage}%)
+                </h2>
+                <ProgressChart completed={progressSummary.completed_topics} total={progressSummary.total_topics} />
+              </div>
+            )}
 
-            {roadmap.recommendations.map((rec) => (
-              <RecommendationCard key={rec.topic_id} recommendation={rec} />
-            ))}
+            <div className="bg-white p-6 rounded shadow">
+              <p className="mb-4 text-gray-700">
+                Skill level: <span className="font-semibold">{roadmap.skill_level}</span>
+              </p>
 
-            <button
-              onClick={handleGenerate}
-              className="mt-3 text-sm text-blue-600 underline"
-            >
-              Regenerate roadmap
-            </button>
-          </div>
+              {roadmap.recommendations.map((rec) => (
+                <RecommendationCard
+                  key={rec.topic_id}
+                  recommendation={rec}
+                  isCompleted={isTopicCompleted(rec.topic_id)}
+                  onToggle={handleToggle}
+                />
+              ))}
+
+              <button onClick={handleGenerate} className="mt-3 text-sm text-blue-600 underline">
+                Regenerate roadmap
+              </button>
+            </div>
+          </>
         )}
 
         {message && <p className="mt-3 text-sm text-red-600">{message}</p>}

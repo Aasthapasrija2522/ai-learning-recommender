@@ -1,4 +1,4 @@
-function RecommendationCard({ recommendation }) {
+function RecommendationCard({ recommendation, isCompleted, onToggle }) {
   const isHighPriority = recommendation.priority === "high";
 
   return (
@@ -10,7 +10,21 @@ function RecommendationCard({ recommendation }) {
       }`}
     >
       <div className="flex justify-between items-center">
-        <h3 className="font-semibold">{recommendation.topic_name}</h3>
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={isCompleted}
+            onChange={() => onToggle(recommendation.topic_id, !isCompleted)}
+          />
+
+          <h3
+            className={`font-semibold ${
+              isCompleted ? "line-through text-gray-400" : ""
+            }`}
+          >
+            {recommendation.topic_name}
+          </h3>
+        </div>
 
         <span
           className={`text-xs px-2 py-1 rounded ${
