@@ -48,5 +48,12 @@ export const getQuizQuestions = () => {
 export const submitQuiz = (answers) => {
   return api.post('/quiz/submit', { answers: answers });
 };
+export const generateRoadmap = () => {
+  return api.post('/roadmap/generate');
+};
+
+export const getLatestRoadmap = () => {
+  return api.get('/roadmap/latest');
+};
 
 export default api;
